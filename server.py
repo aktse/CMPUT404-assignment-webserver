@@ -1,5 +1,5 @@
 #  coding: utf-8 
-import SocketServer
+import SocketServer, os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -30,9 +30,33 @@ import SocketServer
 class MyWebServer(SocketServer.BaseRequestHandler):
     
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall("OK")
+        # Obtain requested filename
+        self.data = self.request.recv(1024)
+        filename = self.data.split()[1]
+
+        # Handle special cases
+        if filename[-1] == '/': # Root
+            pathname = 'www/index.html'
+        else: # Isolate cases to be within www ie prevent backtracking
+            pathname = 'www/' + filename.strip('../')
+
+        # Check if file exists
+        if os.path.exists(pathname):
+            # Send status code
+            self.request.sendall('HTTP/1.1 200 OK\n')
+            # Send content type
+            if filename[-3:] == 'css':
+                self.request.sendall('Content-Type: text/css\n\n')
+            else:
+                self.request.sendall('Content-Type: text/html\n\n')
+            # Send requested file
+            self.request.sendall(open(pathname, 'r').read())
+        else:
+            # 404 Error
+            self.request.sendall('HTTP/1.1 404 Not Found\n')
+
+        # Close connection
+        self.request.close()
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
