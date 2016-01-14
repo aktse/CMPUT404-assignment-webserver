@@ -35,8 +35,10 @@ class MyWebServer(SocketServer.BaseRequestHandler):
         filename = self.data.split()[1]
 
         # Handle special cases
-        if filename[-1] == '/': # Root
+        if filename == '/': # Root directory
             pathname = 'www/index.html'
+        elif filename == '/deep/': # Deep directory  
+            pathname = 'www/deep/index.html'
         else: # Isolate cases to be within www ie prevent backtracking
             pathname = 'www/' + filename.strip('../')
 
