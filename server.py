@@ -32,7 +32,6 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     def handle(self):
         # Obtain requested filename
         self.data = self.request.recv(1024)
-        print self.data
         filename = self.data.split()[1]
 
         pathname = 'www' + filename
