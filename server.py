@@ -32,18 +32,38 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     def handle(self):
         # Obtain requested filename
         self.data = self.request.recv(1024)
+        print self.data
         filename = self.data.split()[1]
 
-        # Handle special cases
-        if filename == '/': # Root directory
-            pathname = 'www/index.html'
-        elif filename == '/deep/': # Deep directory  
-            pathname = 'www/deep/index.html'
-        else: # Isolate cases to be within www ie prevent backtracking
-            pathname = 'www/' + filename.strip('../')
+        pathname = 'www' + filename
+        # Directories return index.html
+        if os.path.isdir(pathname):
+            if pathname[-1] != '/':
+                pathname += '/'
+            pathname += 'index.html'
+
+        # File is in www or deeper
+        found = False
+
+        # Check exact path first
+        for root, dirs, files in os.walk("www"):
+            for name in files:
+                if pathname == os.path.join(root, name):
+                    found = True
+                    break
+
+        # Check if file exists but directory is wrong, return first found
+        if not found:
+            for root, dirs, files in os.walk("www"):
+                for name in files:
+                    if filename[1:] == name:
+                        found = True
+                        pathname = os.path.join(root, name)
+                        break
+
 
         # Check if file exists
-        if os.path.exists(pathname):
+        if found == True:
             # Send status code
             self.request.sendall('HTTP/1.1 200 OK\n')
             # Send content type
